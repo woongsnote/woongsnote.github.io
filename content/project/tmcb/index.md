@@ -1,7 +1,7 @@
 ---
 emoji: 📽️
 title: 영화 리뷰 어플리케이션
-date: '2022-03-14 09:30:00'
+date: '2022-03-14 08:30:00'
 author: 웅스노트
 tags: blog gatsby theme 개츠비 테마
 categories: 프로젝트 featured
@@ -42,7 +42,8 @@ Movie Card 와 Card Book 을 합쳐, Movie Card Book 으로 선정.
 ## 3. 프로젝트 설계
 
 - Flow Chart
-  <img src="./flow-chart.png">
+  <!-- <img src="./flow-chart.png"> -->
+  ![flow chart](./flow-chart.png)
 - 화면 설계서
 
 ## 4. 프로젝트 개발
@@ -94,8 +95,10 @@ private fun getSearchMovies() {
 
 ## 5. 프로젝트 결과
 
-**실행 화면**
-<img src="./layout.png">
+### **실행 결과**
+
+<!-- <img src="./layout.png"> -->
+![실행 화면](./layout.png)
 
 🌐[소스 코드](https://github.com/woongsnote/tmcb)
 

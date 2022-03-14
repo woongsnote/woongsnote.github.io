@@ -44,7 +44,7 @@ module.exports = {
       // ========================================================
       {
         date: '2022.03 ~',
-        activity: '스파르타 코딩 클럽 앱 개발 종합반 미니 튜터',
+        activity: '스파르타 코딩 클럽 미니 튜터 3기 (앱 개발)',
         links: {
           post: '',
           // github: 'https://github.com/zoomkoding/zoomkoding-gatsby-blog',
@@ -53,11 +53,11 @@ module.exports = {
       },
       {
         date: '2022.01 ~',
-        activity: '개인 블로그 개발 및 운영',
+        activity: '개발 블로그 개발 및 운영',
         links: {
-          post: '/gatsby-starter-zoomkoding-introduction',
-          github: 'https://github.com/zoomkoding/zoomkoding-gatsby-blog',
-          demo: 'https://www.zoomkoding.com',
+          post: '/project/gatsby-blog',
+          // github: 'https://github.com/zoomkoding/zoomkoding-gatsby-blog',
+          // demo: 'https://www.zoomkoding.com',
         },
       },
       {
@@ -67,6 +67,14 @@ module.exports = {
           post: '/project-tmcb',
           github: 'https://github.com/woongsnote/tmcb',
           googlePlay: 'https://play.google.com/store/apps/details?id=com.woongsnote.mcb',
+        },
+      },
+      {
+        date: '2021.12 ~ 2021.12 ',
+        activity: '스파르타코딩클럽 메이킹 챌린지 7기',
+        links: {
+          post: '/review/making-challenge-07',
+          demo: 'http://woongflix.shop',
         },
       },
     ],
@@ -96,9 +104,9 @@ module.exports = {
         techStack: ['gatsby', 'react'],
         thumbnailUrl: '',
         links: {
-          post: '/gatsby-starter-zoomkoding-introduction',
-          github: 'https://github.com/zoomkoding/zoomkoding-gatsby-blog',
-          demo: 'https://www.zoomkoding.com',
+          post: '/project/gatsby-blog',
+          github: 'https://github.com/woongsnote/woongsnote.github.io',
+          demo: 'https://woongsnote.github.io',
         },
       },
       {
