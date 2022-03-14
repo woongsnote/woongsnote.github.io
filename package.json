@@ -1,9 +1,9 @@
 {
-  "name": "zoomkoding.com",
+  "name": "woongsnote",
   "private": false,
-  "description": "A neat blog theme for developers",
-  "version": "3.0.0",
-  "author": "zoomkoding <zoomkoding@gmail.com>",
+  "description": "개발 블로그",
+  "version": "1.0.0",
+  "author": "woongsnote <woongsnote@gmail.com>",
   "dependencies": {
     "@mui/icons-material": "^5.1.0",
     "@mui/material": "^5.1.0",
