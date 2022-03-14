@@ -1,0 +1,3 @@
+User-agent: *
+Sitemap: https://woongsnote.github.io/sitemap/sitemap-index.xml
+Host: https://woongsnote.github.io
