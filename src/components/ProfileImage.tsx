@@ -6,9 +6,9 @@ const ProfileImage = () => {
       <Image
         src={"/profile.png"}
         alt="profile"
-        width={100}
-        height={100}
-        className="rounded-full w-auto h-auto"
+        width={130}
+        height={130}
+        className="rounded-full w-auto h-auto p-1"
         priority
       />
     </div>
