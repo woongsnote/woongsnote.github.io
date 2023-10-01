@@ -7,7 +7,7 @@ const UserLinks = ({ username }: { username: string }) => {
       <LinkItem title="Blog" href={`https://${username}.dev`} />
       <LinkItem
         title="Portfoilo"
-        href={`https://woongs-portfolio.vercel.app`}
+        href={`https://${username}-portfolio.vercel.app`}
       />
     </>
   );
