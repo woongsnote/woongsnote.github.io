@@ -8,7 +8,7 @@ interface LinkIconProps extends IconBaseProps {
 const LinkIcon = ({ children, href }: LinkIconProps) => {
   return (
     <Link
-      className="text-white text-3xl m-2 hover:scale-125 transition ease-in-out delay-150 duration-300 rounded-full shadow-md "
+      className="text-3xl p-2 hover:scale-125 transition ease-in-out delay-150 duration-300"
       href={href}
     >
       {children}
