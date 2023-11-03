@@ -1,12 +1,14 @@
-import Link from "next/link";
+import { TLinkItem } from "@lib/types";
 
-type LinkItemProps = {
-  title: string;
-  href: string;
-};
-
-const LinkItem = ({ href, title }: LinkItemProps) => {
-  return <Link className="w-full text-blue-500 text-center font-bold rounded-lg px-2 py-3 my-4 shadow-lg transition ease-in-out delay-150 bg-white hover:-translate-y-1 hover:sm:scale-110 hover:bg-indigo-500 duration-300 hover:text-white" href={href}>{title}</Link>;
-};
+function LinkItem({ title, url }: TLinkItem) {
+  return (
+    <a
+      href={url}
+      aria-label={`move to ${title}`}
+      className='shadow-md w-full text-xl text-center p-1 bg-white rounded-md text-black font-bold hover:shadow-primary/50 hover:bg-primary hover:text-white hover:scale-110 transition-all duration-500'>
+      {title}
+    </a>
+  );
+}
 
 export default LinkItem;
