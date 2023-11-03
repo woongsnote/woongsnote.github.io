@@ -1,13 +1,13 @@
-import ProfileImage from "./ProfileImage";
+import ProfileImage from "@components/ProfileImage";
 
-const UserInfo = ({ username }: { username: string }) => {
+function UserInfo() {
   return (
-    <div className="w-full items-center flex flex-col">
+    <div className="flex flex-col items-center">
       <ProfileImage />
-      <span className="text-xl font-extrabold my-4">@{username}</span>
-      <span className="my-4 text-lg font-bold">Front-End Developer</span>
+      <h2 className="font-bold text-lg">문지웅(@woongsnote)</h2>
+      <p className="text-sm">Front-End Developer</p>
     </div>
   );
-};
+}
 
 export default UserInfo;
