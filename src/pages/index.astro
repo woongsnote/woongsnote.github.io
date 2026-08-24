@@ -1,6 +1,6 @@
 ---
 import LinkItem from "../components/LinkItem.astro";
-import { mainLinks, socialLinks } from "../data/links";
+import { mainLinks } from "../data/links";
 import Layout from "../layouts/Layout.astro";
 
 const title = "문지웅 (@woongsnote)";
@@ -29,25 +29,6 @@ const description = "Frontend Developer · Personal links";
 
       <nav class="main-links" aria-label="주요 링크">
         {mainLinks.map((item) => <LinkItem {item} />)}
-      </nav>
-
-      <nav class="social-links" aria-label="소셜 링크">
-        {socialLinks.map((item) => (
-          <a
-            class="social-link"
-            href={item.url}
-            aria-label={item.ariaLabel}
-            title={item.label}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <rect x="3.75" y="3.75" width="16.5" height="16.5" rx="5" />
-              <circle cx="12" cy="12" r="3.75" />
-              <circle cx="17.5" cy="6.5" r=".75" fill="currentColor" stroke="none" />
-            </svg>
-          </a>
-        ))}
       </nav>
 
       <footer>
