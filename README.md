@@ -1,6 +1,16 @@
 # woongsnote.github.io
 
-Personal link hub for @woongsnote.
+@woongsnote의 Personal Link Hub입니다. Blog, GitHub, Email로 연결되는 개인 시작 페이지입니다.
+
+## Live Site
+
+https://woongsnote.github.io
+
+## Links
+
+- Blog
+- GitHub
+- Email
 
 ## Stack
 
@@ -8,20 +18,26 @@ Personal link hub for @woongsnote.
 - TypeScript
 - CSS
 
+## Project
+
+- Static site
+- No client-side JavaScript
+- GitHub Pages deployment
+
 ## Development
 
-\`\`\`sh
+```sh
 npm install
 npm run dev
-\`\`\`
+```
 
-## Build
+## Validation / Build
 
-\`\`\`sh
+```sh
 npm run check
 npm run build
-\`\`\`
+```
 
 ## Deployment
 
-GitHub Pages via GitHub Actions.
+GitHub Actions를 통해 GitHub Pages에 배포합니다.
