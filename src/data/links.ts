@@ -1,4 +1,4 @@
-export type LinkIcon = "blog" | "github" | "email" | "instagram";
+export type LinkIcon = "blog" | "github" | "email";
 
 export type LinkItem = {
   id: string;
@@ -37,17 +37,5 @@ export const mainLinks: LinkItem[] = [
     ariaLabel: "문지웅에게 이메일 보내기",
     icon: "email",
     external: false,
-  },
-];
-
-export const socialLinks: LinkItem[] = [
-  {
-    id: "instagram",
-    label: "Instagram",
-    description: "Instagram profile",
-    url: "https://instagram.com/woongsnote",
-    ariaLabel: "Instagram 프로필 열기",
-    icon: "instagram",
-    external: true,
   },
 ];
