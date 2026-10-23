@@ -35,18 +35,21 @@ npm run build
 - 5:9 세로형 명함, 앞면 `#25272C`, 뒷면 `#F8FAFC`, 버튼 `#102552`
 - 앞면: W. / woong. / Build. Learn. Record. / 블로그 주소
 - 뒷면: BLOG → GITHUB → EMAIL / 연락처 QR / Save Contact
-- 카드의 빈 영역을 클릭·터치하거나 하단 뒤집기 버튼으로 전환합니다.
-- 키보드는 뒤집기 버튼에 Tab으로 이동한 뒤 Enter 또는 Space를 사용합니다.
-- 링크와 Save Contact는 카드를 뒤집지 않습니다.
+- 카드의 빈 영역을 클릭·터치하거나 하단 회전 다이얼을 클릭하면 다음 면으로 전환합니다.
+- 다이얼에서 마우스 휠, 좌우 드래그, 모바일 터치 드래그로 회전합니다. 다이얼 밖 스크롤과 세로 터치 스크롤은 유지합니다.
+- 휠은 `deltaMode`를 정규화하고 큰 단발 입력은 90°를 넘겨 한 칸으로 면을 전환합니다. 작은·소수 입력은 연속 회전으로 누적하며, 이벤트별 회전량을 제한합니다. 입력값 기반 구분이므로 장치 설정에 따라 차이가 있습니다.
+- 드래그 종료 또는 마지막 휠 입력 180ms 후 가까운 180° 단위로 스냅하며, 360° 이상 회전도 누적합니다.
+- 키보드는 다이얼에 Tab으로 이동한 뒤 ← / →로 각 방향의 다음 면까지 180° 회전합니다. Enter / Space는 클릭과 같으며, 반복 입력은 대기 중인 목표 각도에 누적합니다.
+- 링크, 연락처 QR과 Save Contact는 카드를 회전시키지 않습니다.
 - 숨겨진 면은 `inert` 및 `aria-hidden`으로 포커스와 접근성 트리에서 제외합니다.
-- 600ms CSS 3D 전환을 사용하며, reduced motion 설정에서는 애니메이션을 생략합니다.
+- 직접 조작은 각도를 즉시 반영하고, 면 전환·스냅은 `requestAnimationFrame` 기반 480ms cubic ease-out을 사용합니다. Reduced Motion에서는 전환·스냅 애니메이션을 생략하며 직접 조작은 유지합니다.
 - 작은 화면은 비율을 유지하고 세로 스크롤을 허용합니다.
 - JavaScript를 끄면 앞뒷면을 세로로 표시해 링크와 연락처 저장을 유지합니다.
 
 ## Profile / Contact
 
 - `src/data/profile.ts`: 이름, 표시 이름, 태그라인, 이메일, 링크 정보의 단일 기준
-- `src/pages/index.astro`: 명함 양면, 프로필에서 파생한 링크, 플립 및 기존 공유 처리
+- `src/pages/index.astro`: 명함 양면, 프로필에서 파생한 링크, 회전 다이얼 및 기존 공유 처리
 - `src/pages/contact.vcf.ts`: 기존 vCard 3.0 생성 코드 (UTF-8, CRLF)
 - `public/contact-qr.svg`: 웹 명함용. `profile.cardUrl` 기준 `/contact.vcf`를 인코딩
 - `public/card-qr.svg`: 기존 명함 주소 QR. 추후 실물 명함은 웹 명함 주소를 사용

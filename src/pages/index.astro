@@ -118,7 +118,7 @@ const contactLinks = [
           </svg>
         </div>
         <span id="rotation-help" class="sr-only">
-          좌우로 드래그하거나 휠로 회전합니다. 좌우 방향키로 각도를 조절하고,
+          좌우로 드래그하거나 휠로 회전합니다. 좌우 방향키로 해당 방향의 다음 면으로 회전하고,
           Enter 또는 Space를 누르거나 탭하면 다음 면으로 회전합니다.
         </span>
         <button
@@ -164,6 +164,7 @@ const contactLinks = [
     let direction = 1;
     let animation = 0;
     let snapTimer = 0;
+    let wheelMode: "continuous" | "stepped" | null = null;
     let suppressClick = false;
     let pointer: { id: number; x: number; y: number; angle: number; dragging: boolean } | null = null;
 
@@ -218,6 +219,7 @@ const contactLinks = [
     };
 
     const snap = () => {
+      wheelMode = null;
       // Resolve exact half-turn ties in the last input direction, also below zero.
       const turns = angle / 180;
       const nearest = direction > 0 ? Math.floor(turns + 0.5) : Math.ceil(turns - 0.5);
@@ -239,7 +241,9 @@ const contactLinks = [
       snapTimer = window.setTimeout(snap, 180);
     };
 
-    const flip = () => {
+    const flip = (step = direction) => {
+      wheelMode = null;
+      direction = step;
       // Repeated taps advance the pending destination instead of resetting it.
       const turns = targetAngle / 180;
       const next = direction > 0 ? Math.floor(turns) + 1 : Math.ceil(turns) - 1;
@@ -260,8 +264,18 @@ const contactLinks = [
       const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
       if (!delta) return;
       event.preventDefault();
-      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? dial.clientHeight : 1;
-      rotateBy(delta * unit * 0.6);
+      const magnitude = Math.abs(delta);
+      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? window.innerHeight : 1;
+      // WheelEvent has no device identifier. Small/fractional input selects
+      // continuous rotation for this gesture, including its larger later events.
+      const fine = !Number.isInteger(delta) || magnitude < (event.deltaMode === 0 ? 40 : 1);
+      if (fine || wheelMode === null) wheelMode = fine ? "continuous" : "stepped";
+      const normalized = magnitude * unit * 0.6;
+      // A detent must cross the 90-degree snap midpoint; cap large OS deltas.
+      const degrees = wheelMode === "stepped"
+        ? Math.min(150, Math.max(120, normalized))
+        : Math.min(45, normalized);
+      rotateBy(Math.sign(delta) * degrees);
       scheduleSnap();
     }, { passive: false });
 
@@ -285,6 +299,7 @@ const contactLinks = [
           return;
         }
         pointer.dragging = true;
+        wheelMode = null;
         stop();
         pointer.angle = angle;
         dial.classList.add("is-dragging");
@@ -308,8 +323,7 @@ const contactLinks = [
       if (pointer) return;
       if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
         event.preventDefault();
-        rotateBy(event.key === "ArrowRight" ? 30 : -30);
-        scheduleSnap();
+        flip(event.key === "ArrowRight" ? 1 : -1);
       }
     });
     reducedMotion.addEventListener("change", () => {
@@ -319,7 +333,7 @@ const contactLinks = [
       const target = event.target;
       if (
         pointer || (front.inert && back.inert) || !(target instanceof Element) ||
-        target.closest("a, button, input, label, .contact-save")
+        target.closest("a, button, input, label, .contact-save, .contact-qr")
       ) return;
       if (window.getSelection()?.toString()) return;
       flip();
