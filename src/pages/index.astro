@@ -1,10 +1,11 @@
 ---
 import LinkItem from "../components/LinkItem.astro";
 import { mainLinks } from "../data/links";
+import { profile } from "../data/profile";
 import Layout from "../layouts/Layout.astro";
 
-const title = "문지웅 (@woongsnote)";
-const description = "Frontend Developer · Personal links";
+const title = `${profile.name} (@${profile.username}) · Digital Business Card`;
+const description = `${profile.role} · ${profile.bio}`;
 ---
 
 <Layout {title} {description}>
@@ -13,27 +14,114 @@ const description = "Frontend Developer · Personal links";
       <header class="profile">
         <img
           class="profile-image"
-          src="/profile.png"
-          alt="문지웅 프로필 사진"
+          src={profile.image}
+          alt={`${profile.name} 프로필 사진`}
           width="421"
           height="421"
           loading="eager"
           decoding="async"
         />
         <div class="profile-copy">
-          <h1>문지웅</h1>
-          <p class="handle">@woongsnote</p>
-          <p class="role">Frontend Developer</p>
+          <h1>{profile.name}</h1>
+          <p class="handle">@{profile.username}</p>
+          <p class="role">{profile.role}</p>
         </div>
       </header>
+
+      <p class="bio">{profile.bio}</p>
+
+      <section class="card-tools" aria-label="연락처 저장 및 명함 공유">
+        <div class="card-actions">
+          <a class="card-action" href="/contact.vcf" download={`${profile.username}.vcf`}>
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 3v12m-4-4 4 4 4-4M5 16v4h14v-4" />
+            </svg>
+            연락처 저장
+          </a>
+          <button
+            class="card-action"
+            id="share-card"
+            type="button"
+            data-url={profile.cardUrl}
+            data-title={title}
+            hidden
+          >
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 16V3m-4 4 4-4 4 4M5 12v8h14v-8" />
+            </svg>
+            명함 공유
+          </button>
+        </div>
+        <p id="share-status" class="share-status" role="status" aria-atomic="true"></p>
+        <div id="manual-copy" class="manual-copy" hidden>
+          <label for="card-url">명함 주소</label>
+          <input id="card-url" type="url" value={profile.cardUrl} readonly />
+        </div>
+        <details class="qr-panel">
+          <summary>QR 코드 보기</summary>
+          <div class="qr-content">
+            <img src="/card-qr.svg" alt={`${profile.name} 디지털 명함 QR 코드`} width="232" height="232" />
+            <p>카메라로 스캔하면 명함이 열립니다.</p>
+            <a href={profile.cardUrl}>{profile.cardUrl}</a>
+          </div>
+        </details>
+      </section>
 
       <nav class="main-links" aria-label="주요 링크">
         {mainLinks.map((item) => <LinkItem {item} />)}
       </nav>
 
       <footer>
-        <small>© {new Date().getFullYear()} woongsnote</small>
+        <small>© {new Date().getFullYear()} {profile.username}</small>
       </footer>
     </article>
   </main>
 </Layout>
+
+<script>
+  const shareButton = document.querySelector<HTMLButtonElement>("#share-card");
+  const status = document.querySelector<HTMLParagraphElement>("#share-status");
+  const manualCopy = document.querySelector<HTMLDivElement>("#manual-copy");
+  const urlInput = document.querySelector<HTMLInputElement>("#card-url");
+
+  if (shareButton && status && manualCopy && urlInput) {
+    const url = shareButton.dataset.url;
+    const title = shareButton.dataset.title;
+
+    if (url && title) {
+      shareButton.hidden = false;
+      shareButton.addEventListener("click", async () => {
+        shareButton.disabled = true;
+        status.textContent = "";
+        manualCopy.hidden = true;
+
+        try {
+          if (typeof navigator.share === "function") {
+            try {
+              await navigator.share({ title, url });
+              status.textContent = "명함을 공유했습니다.";
+              return;
+            } catch (error) {
+              if (error instanceof Error && error.name === "AbortError") {
+                status.textContent = "공유를 취소했습니다.";
+                return;
+              }
+            }
+          }
+
+          try {
+            await navigator.clipboard.writeText(url);
+            status.textContent = "명함 주소를 복사했습니다.";
+          } catch {
+            manualCopy.hidden = false;
+            urlInput.focus();
+            urlInput.select();
+            status.textContent = "자동 복사가 되지 않았습니다. 아래 주소를 길게 누르거나 선택해 복사해 주세요.";
+          }
+        } finally {
+          shareButton.disabled = false;
+        }
+      });
+    }
+  }
+</script>

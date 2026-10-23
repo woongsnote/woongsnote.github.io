@@ -45,6 +45,15 @@ a {
   text-decoration: none;
 }
 
+[hidden] {
+  display: none !important;
+}
+
+button,
+input {
+  font: inherit;
+}
+
 .page-shell {
   display: grid;
   min-height: 100vh;
@@ -61,7 +70,7 @@ a {
   display: flex;
   align-items: center;
   gap: 18px;
-  margin-bottom: 32px;
+  margin-bottom: 18px;
 }
 
 .profile-image {
@@ -100,6 +109,123 @@ h1 {
   margin-top: 5px;
   color: var(--text-secondary);
   font-size: 0.9375rem;
+}
+
+.bio {
+  margin-bottom: 24px;
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.card-tools {
+  margin-bottom: 24px;
+}
+
+.card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.card-action {
+  display: flex;
+  flex: 1 1 120px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.card-action svg {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  stroke: var(--accent);
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.card-action:hover,
+.qr-panel summary:hover {
+  border-color: var(--border-hover);
+  background: var(--surface-hover);
+}
+
+.card-action:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.share-status,
+.manual-copy,
+.qr-content {
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+}
+
+.share-status:not(:empty),
+.manual-copy {
+  margin-top: 12px;
+}
+
+.manual-copy label {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.manual-copy input {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.qr-panel {
+  margin-top: 12px;
+}
+
+.qr-panel summary {
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.qr-content {
+  padding-top: 16px;
+  text-align: center;
+}
+
+.qr-content img {
+  display: block;
+  width: min(100%, 232px);
+  height: auto;
+  margin: 0 auto 12px;
+  background: #fff;
+}
+
+.qr-content a {
+  display: inline-block;
+  padding-block: 8px;
+  color: var(--accent);
+  overflow-wrap: anywhere;
 }
 
 .main-links {
@@ -188,7 +314,10 @@ h1 {
   transform: translateX(3px);
 }
 
-a:focus-visible {
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible,
+input:focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 3px;
 }
