@@ -290,6 +290,7 @@ input {
 #share-card {
   grid-column: 3;
   justify-self: start;
+  min-width: 44px;
 }
 .sr-only {
   position: absolute;
