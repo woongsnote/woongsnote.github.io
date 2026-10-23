@@ -3,6 +3,8 @@ export const profile = {
   familyName: "문",
   givenName: "지웅",
   username: "woongsnote",
+  displayName: "woong.",
+  tagline: "Build. Learn. Record.",
   role: "Frontend Developer",
   bio: "배우고 만든 것을 기록하며, 더 나은 경험을 고민합니다.",
   image: "/profile.png",

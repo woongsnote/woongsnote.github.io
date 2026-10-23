@@ -1,84 +1,186 @@
 ---
-import LinkItem from "../components/LinkItem.astro";
-import { mainLinks } from "../data/links";
 import { profile } from "../data/profile";
 import Layout from "../layouts/Layout.astro";
 
 const title = `${profile.name} (@${profile.username}) · Digital Business Card`;
-const description = `${profile.role} · ${profile.bio}`;
+const description = `${profile.tagline} · ${profile.bio}`;
+const websiteLabel = new URL(profile.website).hostname.replace(/^www\./, "");
+const githubLabel =
+  new URL(profile.github).host + new URL(profile.github).pathname;
+const contactLinks = [
+  { label: "BLOG", text: websiteLabel, url: profile.website, external: true },
+  { label: "GITHUB", text: githubLabel, url: profile.github, external: true },
+  {
+    label: "EMAIL",
+    text: "Get in touch",
+    url: `mailto:${profile.email}`,
+    external: false,
+  },
+];
 ---
 
 <Layout {title} {description}>
   <main class="page-shell">
-    <article class="link-hub">
-      <header class="profile">
-        <img
-          class="profile-image"
-          src={profile.image}
-          alt={`${profile.name} 프로필 사진`}
-          width="421"
-          height="421"
-          loading="eager"
-          decoding="async"
-        />
-        <div class="profile-copy">
-          <h1>{profile.name}</h1>
-          <p class="handle">@{profile.username}</p>
-          <p class="role">{profile.role}</p>
-        </div>
-      </header>
-
-      <p class="bio">{profile.bio}</p>
-
-      <section class="card-tools" aria-label="연락처 저장 및 명함 공유">
-        <div class="card-actions">
-          <a class="card-action" href="/contact.vcf" download={`${profile.username}.vcf`}>
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M12 3v12m-4-4 4 4 4-4M5 16v4h14v-4" />
-            </svg>
-            연락처 저장
-          </a>
-          <button
-            class="card-action"
-            id="share-card"
-            type="button"
-            data-url={profile.cardUrl}
-            data-title={title}
-            hidden
+    <div class="card-stage">
+      <article class="business-card" aria-label={`${profile.name} 디지털 명함`}>
+        <div class="card-turner" id="card-faces">
+          <section
+            class="card-face card-front"
+            id="card-front"
+            aria-label="Identity · 명함 앞면"
           >
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M12 16V3m-4 4 4-4 4 4M5 12v8h14v-8" />
-            </svg>
-            명함 공유
-          </button>
+            <span class="wordmark" aria-hidden="true">
+              W.
+            </span>
+            <div class="identity">
+              <h1 lang="en">{profile.displayName}</h1>
+              <p lang="en">{profile.tagline}</p>
+            </div>
+            <p class="front-footer">{websiteLabel}</p>
+          </section>
+          <section
+            class="card-face card-back"
+            id="card-back"
+            aria-labelledby="connect-heading"
+          >
+            <header class="back-header">
+              <span class="wordmark" aria-hidden="true">
+                W.
+              </span>
+              <span class="eyebrow" lang="en">
+                CONNECT
+              </span>
+            </header>
+            <div class="connect">
+              <h2 id="connect-heading" lang="en">
+                Where next.
+              </h2>
+              <nav class="contact-links" aria-label="주요 링크">
+                {contactLinks.map((link) => (
+                  <a
+                    class="contact-link"
+                    href={link.url}
+                    target={link.external ? "_blank" : undefined}
+                    rel={link.external ? "noopener noreferrer" : undefined}
+                    aria-label={
+                      link.label === "EMAIL"
+                        ? `${profile.email}로 이메일 보내기`
+                        : `${link.label} · ${link.text} (새 탭)`
+                    }
+                  >
+                    <span class="link-label" lang="en">
+                      {link.label}
+                    </span>
+                    <span class="link-text" lang="en">
+                      {link.text}
+                    </span>
+                  </a>
+                ))}
+              </nav>
+            </div>
+            <div class="contact-save">
+              <img
+                class="contact-qr"
+                src="/contact-qr.svg"
+                alt="연락처 저장용 QR 코드. 스캔하면 vCard 파일이 열립니다."
+                width="111"
+                height="111"
+              />
+              <a
+                class="save-contact"
+                href="/contact.vcf"
+                download={`${profile.username}.vcf`}
+                lang="en"
+              >
+                Save Contact
+              </a>
+            </div>
+          </section>
         </div>
-        <p id="share-status" class="share-status" role="status" aria-atomic="true"></p>
-        <div id="manual-copy" class="manual-copy" hidden>
-          <label for="card-url">명함 주소</label>
-          <input id="card-url" type="url" value={profile.cardUrl} readonly />
-        </div>
-        <details class="qr-panel">
-          <summary>QR 코드 보기</summary>
-          <div class="qr-content">
-            <img src="/card-qr.svg" alt={`${profile.name} 디지털 명함 QR 코드`} width="232" height="232" />
-            <p>카메라로 스캔하면 명함이 열립니다.</p>
-            <a href={profile.cardUrl}>{profile.cardUrl}</a>
-          </div>
-        </details>
-      </section>
-
-      <nav class="main-links" aria-label="주요 링크">
-        {mainLinks.map((item) => <LinkItem {item} />)}
-      </nav>
-
-      <footer>
-        <small>© {new Date().getFullYear()} {profile.username}</small>
-      </footer>
-    </article>
+      </article>
+      <div class="card-controls" aria-label="명함 컨트롤">
+        <button
+          id="flip-card"
+          class="quiet-control"
+          type="button"
+          aria-controls="card-faces"
+          aria-pressed="false"
+          aria-label="명함 뒤집기 · 현재 앞면"
+          hidden
+        >
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M7 7h11l-3-3M17 17H6l3 3M20 8v6M4 16v-6" />
+          </svg>
+          <span>뒤집기</span>
+        </button>
+        <button
+          class="quiet-control"
+          id="share-card"
+          type="button"
+          data-url={profile.cardUrl}
+          data-title={title}
+          hidden
+        >
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 16V3m-4 4 4-4 4 4M5 12v8h14v-8" />
+          </svg>
+          <span>공유</span>
+        </button>
+      </div>
+      <p
+        id="share-status"
+        class="share-status"
+        role="status"
+        aria-atomic="true"
+      ></p>
+      <div id="manual-copy" class="manual-copy" hidden>
+        <label for="card-url">명함 주소</label>
+        <input id="card-url" type="url" value={profile.cardUrl} readonly />
+      </div>
+    </div>
   </main>
 </Layout>
 
 <script>
+  const card = document.querySelector<HTMLElement>(".business-card");
+  const front = document.querySelector<HTMLElement>("#card-front");
+  const back = document.querySelector<HTMLElement>("#card-back");
+  const flipButton = document.querySelector<HTMLButtonElement>("#flip-card");
+
+  if (card && front && back && flipButton) {
+    let flipped = false;
+    const flip = () => {
+      // Move focus before hiding a face, including during rapid reversals.
+      if (card.contains(document.activeElement)) flipButton.focus();
+      flipped = !flipped;
+      card.classList.toggle("is-flipped", flipped);
+      front.inert = flipped;
+      back.inert = !flipped;
+      front.setAttribute("aria-hidden", String(flipped));
+      back.setAttribute("aria-hidden", String(!flipped));
+      flipButton.setAttribute("aria-pressed", String(flipped));
+      flipButton.setAttribute(
+        "aria-label",
+        `명함 뒤집기 · 현재 ${flipped ? "뒷면" : "앞면"}`,
+      );
+    };
+    back.inert = true;
+    back.setAttribute("aria-hidden", "true");
+    card.classList.add("is-interactive");
+    flipButton.hidden = false;
+    flipButton.addEventListener("click", flip);
+    card.addEventListener("click", (event) => {
+      const target = event.target;
+      if (
+        !(target instanceof Element) ||
+        target.closest("a, button, input, label")
+      )
+        return;
+      if (window.getSelection()?.toString()) return;
+      flip();
+    });
+  }
+
   const shareButton = document.querySelector<HTMLButtonElement>("#share-card");
   const status = document.querySelector<HTMLParagraphElement>("#share-status");
   const manualCopy = document.querySelector<HTMLDivElement>("#manual-copy");
@@ -116,7 +218,8 @@ const description = `${profile.role} · ${profile.bio}`;
             manualCopy.hidden = false;
             urlInput.focus();
             urlInput.select();
-            status.textContent = "자동 복사가 되지 않았습니다. 아래 주소를 길게 누르거나 선택해 복사해 주세요.";
+            status.textContent =
+              "자동 복사가 되지 않았습니다. 아래 주소를 길게 누르거나 선택해 복사해 주세요.";
           }
         } finally {
           shareButton.disabled = false;

@@ -1,30 +1,16 @@
 # woongsnote.github.io
 
-@woongsnote의 디지털 명함입니다. 프로필, 연락처 저장, 명함 공유 및 외부 링크를 제공합니다.
+@woongsnote의 디지털 명함입니다. 세로형 종이 명함을 닮은 앞뒷면과 연락처 저장, 명함 공유 기능을 제공합니다.
 
 ## Live Site
 
 https://woongsnote.github.io
 
-## Links
-
-- Woongsnote
-- GitHub
-- Email
-
 ## Stack
 
-- Astro
-- TypeScript
-- CSS
-
-## Project
-
-- Static site
-- Web Share API 및 URL 복사용 최소한의 클라이언트 JavaScript
-- 외부 API 없이 표시되는 정적 SVG QR 코드
-- 빌드 시 생성되는 vCard 3.0 연락처 파일
-- GitHub Pages deployment
+- Astro + TypeScript + CSS
+- GitHub Pages + GitHub Actions
+- npm
 
 ## Development
 
@@ -44,15 +30,30 @@ npm run build
 
 `main`에 push하면 GitHub Actions를 통해 GitHub Pages에 배포합니다. `dev` push는 운영 배포를 실행하지 않습니다.
 
+## Design / Interaction
+
+- 5:9 세로형 명함, 앞면 `#25272C`, 뒷면 `#F8FAFC`, 버튼 `#102552`
+- 앞면: W. / woong. / Build. Learn. Record. / 블로그 주소
+- 뒷면: BLOG → GITHUB → EMAIL / 연락처 QR / Save Contact
+- 카드의 빈 영역을 클릭·터치하거나 하단 뒤집기 버튼으로 전환합니다.
+- 키보드는 뒤집기 버튼에 Tab으로 이동한 뒤 Enter 또는 Space를 사용합니다.
+- 링크와 Save Contact는 카드를 뒤집지 않습니다.
+- 숨겨진 면은 `inert` 및 `aria-hidden`으로 포커스와 접근성 트리에서 제외합니다.
+- 600ms CSS 3D 전환을 사용하며, reduced motion 설정에서는 애니메이션을 생략합니다.
+- 작은 화면은 비율을 유지하고 세로 스크롤을 허용합니다.
+- JavaScript를 끄면 앞뒷면을 세로로 표시해 링크와 연락처 저장을 유지합니다.
+
 ## Profile / Contact
 
-- `src/data/profile.ts`: 이름, 사용자명, 소개, 이메일, 링크 정보
-- `src/data/links.ts`: 외부 링크의 표시 순서와 설명 (`LinkItem.astro` 사용)
-- `src/pages/contact.vcf.ts`: 프로필 데이터로 `/contact.vcf` 생성 (UTF-8, CRLF)
-- `public/card-qr.svg`: `https://woongsnote.github.io/`를 인코딩한 정적 QR 코드 (오류 정정 M, 여백 4모듈)
+- `src/data/profile.ts`: 이름, 표시 이름, 태그라인, 이메일, 링크 정보의 단일 기준
+- `src/pages/index.astro`: 명함 양면, 프로필에서 파생한 링크, 플립 및 기존 공유 처리
+- `src/pages/contact.vcf.ts`: 기존 vCard 3.0 생성 코드 (UTF-8, CRLF)
+- `public/contact-qr.svg`: 웹 명함용. `profile.cardUrl` 기준 `/contact.vcf`를 인코딩
+- `public/card-qr.svg`: 기존 명함 주소 QR. 추후 실물 명함은 웹 명함 주소를 사용
+- 두 QR은 오류 정정 M, 여백 4모듈을 사용합니다. 인쇄용 파일은 포함하지 않습니다.
 
-명함 주소를 변경하면 `profile.cardUrl`, `astro.config.mjs`의 `site`, QR 코드 SVG를 함께 갱신합니다. QR 코드는 생성 후 실제 디코딩하여 대상 주소를 확인합니다.
+웹 QR은 빌드 전에 `new URL("/contact.vcf", profile.cardUrl).href`에서 생성한 정적 SVG입니다. 주소를 변경할 때는 `profile.cardUrl`, `astro.config.mjs`의 `site` 및 두 QR을 함께 갱신하고 실제 디코딩으로 확인합니다. QR 렌더링은 외부 서비스나 런타임 의존성을 사용하지 않습니다.
 
-연락처 저장은 같은 출처의 `.vcf` 파일을 다운로드합니다. 기기에 따라 다운로드 또는 연락처 가져오기 화면이 표시될 수 있습니다. 정적 호스팅에서는 HTTP 헤더를 호스트가 결정하므로 다운로드 파일명은 링크의 `download` 속성에도 지정합니다.
+Save Contact는 같은 출처의 `.vcf` 파일을 다운로드하도록 요청합니다. QR 스캔은 같은 파일 URL을 엽니다. 기기와 브라우저에 따라 다운로드 또는 연락처 가져오기 화면이 표시되며, 실제 연락처 추가는 사용자가 확인합니다. 정적 호스팅에서는 HTTP 헤더를 호스트가 결정하므로 파일명은 링크의 `download` 속성에도 지정합니다. iOS·Android 카메라 스캔과 연락처 가져오기 UI는 실기기 확인이 필요합니다.
 
-명함 공유는 Web Share API를 우선 사용하고, 미지원 또는 공유 실패 시 클립보드 복사를 시도합니다. 공유 취소 시 복사하지 않으며, 자동 복사도 실패하면 직접 복사할 주소를 표시합니다. JavaScript를 끈 경우에도 연락처 저장, QR 표시, 외부 링크는 동작합니다.
+명함 공유는 기존 Web Share API 처리를 재사용합니다. 미지원 또는 공유 실패 시 클립보드 복사를 시도하고, 취소 시 복사하지 않습니다. 자동 복사도 실패하면 직접 복사할 주소를 표시합니다.
