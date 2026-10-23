@@ -99,20 +99,28 @@ const contactLinks = [
         </div>
       </article>
       <div class="card-controls" aria-label="명함 컨트롤">
-        <button
-          id="flip-card"
-          class="quiet-control"
-          type="button"
-          aria-controls="card-faces"
-          aria-pressed="false"
-          aria-label="명함 뒤집기 · 현재 앞면"
-          hidden
-        >
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M7 7h11l-3-3M17 17H6l3 3M20 8v6M4 16v-6" />
+        <div class="rotation-control" hidden>
+          <svg class="rotation-direction" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M8 8H4V4m0 4a8 8 0 1 1-1 7" />
           </svg>
-          <span>뒤집기</span>
-        </button>
+          <button
+            id="rotation-dial"
+            class="rotation-dial"
+            type="button"
+            aria-controls="card-faces"
+            aria-label="명함 회전 · 현재 앞면"
+            aria-describedby="rotation-help"
+          >
+            <span class="dial-rotor" aria-hidden="true"></span>
+          </button>
+          <svg class="rotation-direction" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M16 8h4V4m0 4a8 8 0 1 0 1 7" />
+          </svg>
+        </div>
+        <span id="rotation-help" class="sr-only">
+          좌우로 드래그하거나 휠로 회전합니다. 좌우 방향키로 각도를 조절하고,
+          Enter 또는 Space를 누르거나 탭하면 다음 면으로 회전합니다.
+        </span>
         <button
           class="quiet-control"
           id="share-card"
@@ -145,37 +153,174 @@ const contactLinks = [
   const card = document.querySelector<HTMLElement>(".business-card");
   const front = document.querySelector<HTMLElement>("#card-front");
   const back = document.querySelector<HTMLElement>("#card-back");
-  const flipButton = document.querySelector<HTMLButtonElement>("#flip-card");
+  const turner = document.querySelector<HTMLElement>("#card-faces");
+  const dial = document.querySelector<HTMLButtonElement>("#rotation-dial");
+  const rotationControl = document.querySelector<HTMLElement>(".rotation-control");
 
-  if (card && front && back && flipButton) {
-    let flipped = false;
-    const flip = () => {
-      // Move focus before hiding a face, including during rapid reversals.
-      if (card.contains(document.activeElement)) flipButton.focus();
-      flipped = !flipped;
-      card.classList.toggle("is-flipped", flipped);
-      front.inert = flipped;
-      back.inert = !flipped;
-      front.setAttribute("aria-hidden", String(flipped));
-      back.setAttribute("aria-hidden", String(!flipped));
-      flipButton.setAttribute("aria-pressed", String(flipped));
-      flipButton.setAttribute(
+  if (card && front && back && turner && dial && rotationControl) {
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let angle = 0;
+    let targetAngle = 0;
+    let direction = 1;
+    let animation = 0;
+    let snapTimer = 0;
+    let suppressClick = false;
+    let pointer: { id: number; x: number; y: number; angle: number; dragging: boolean } | null = null;
+
+    const render = () => {
+      turner.style.transform = `rotateY(${angle}deg)`;
+      dial.style.setProperty("--dial-angle", `${angle}deg`);
+    };
+
+    const setFaceAccess = (moving: boolean) => {
+      const backVisible = Math.cos((angle * Math.PI) / 180) < 0;
+      // Move focus before making either face inert or aria-hidden.
+      if (card.contains(document.activeElement)) dial.focus({ preventScroll: true });
+      front.inert = moving || backVisible;
+      back.inert = moving || !backVisible;
+      front.setAttribute("aria-hidden", String(front.inert));
+      back.setAttribute("aria-hidden", String(back.inert));
+      dial.setAttribute(
         "aria-label",
-        `명함 뒤집기 · 현재 ${flipped ? "뒷면" : "앞면"}`,
+        `명함 회전 · ${moving ? "회전 중" : `현재 ${backVisible ? "뒷면" : "앞면"}`}`,
       );
     };
-    back.inert = true;
-    back.setAttribute("aria-hidden", "true");
+
+    const stop = () => {
+      window.clearTimeout(snapTimer);
+      cancelAnimationFrame(animation);
+      animation = 0;
+    };
+
+    const animateTo = (destination: number) => {
+      stop();
+      targetAngle = destination;
+      if (reducedMotion.matches || Math.abs(destination - angle) < 0.01) {
+        angle = destination;
+        render();
+        setFaceAccess(false);
+        return;
+      }
+      setFaceAccess(true);
+      const origin = angle;
+      const started = performance.now();
+      const tick = (now: number) => {
+        const progress = Math.min((now - started) / 480, 1);
+        angle = origin + (destination - origin) * (1 - (1 - progress) ** 3);
+        render();
+        if (progress < 1) animation = requestAnimationFrame(tick);
+        else {
+          animation = 0;
+          setFaceAccess(false);
+        }
+      };
+      animation = requestAnimationFrame(tick);
+    };
+
+    const snap = () => {
+      // Resolve exact half-turn ties in the last input direction, also below zero.
+      const turns = angle / 180;
+      const nearest = direction > 0 ? Math.floor(turns + 0.5) : Math.ceil(turns - 0.5);
+      animateTo(nearest * 180);
+    };
+
+    const rotateBy = (delta: number) => {
+      if (!delta) return;
+      stop();
+      direction = Math.sign(delta);
+      angle += delta;
+      targetAngle = angle;
+      setFaceAccess(true);
+      render();
+    };
+
+    const scheduleSnap = () => {
+      window.clearTimeout(snapTimer);
+      snapTimer = window.setTimeout(snap, 180);
+    };
+
+    const flip = () => {
+      // Repeated taps advance the pending destination instead of resetting it.
+      const turns = targetAngle / 180;
+      const next = direction > 0 ? Math.floor(turns) + 1 : Math.ceil(turns) - 1;
+      animateTo(next * 180);
+    };
+
+    setFaceAccess(false);
+    render();
     card.classList.add("is-interactive");
-    flipButton.hidden = false;
-    flipButton.addEventListener("click", flip);
+    rotationControl.hidden = false;
+
+    dial.addEventListener("click", (event) => {
+      if (pointer || (suppressClick && event.detail !== 0)) return;
+      flip();
+    });
+    dial.addEventListener("wheel", (event) => {
+      if (event.ctrlKey || pointer) return;
+      const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+      if (!delta) return;
+      event.preventDefault();
+      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? dial.clientHeight : 1;
+      rotateBy(delta * unit * 0.6);
+      scheduleSnap();
+    }, { passive: false });
+
+    dial.addEventListener("pointerdown", (event) => {
+      if (!event.isPrimary || event.button !== 0 || pointer) return;
+      suppressClick = false;
+      pointer = { id: event.pointerId, x: event.clientX, y: event.clientY, angle, dragging: false };
+      dial.setPointerCapture(event.pointerId);
+    });
+    dial.addEventListener("pointermove", (event) => {
+      if (!pointer || pointer.id !== event.pointerId) return;
+      const dx = event.clientX - pointer.x;
+      const dy = event.clientY - pointer.y;
+      if (!pointer.dragging) {
+        if (Math.max(Math.abs(dx), Math.abs(dy)) < 6) return;
+        // Leave vertical touch gestures to the page's native scrolling.
+        if (Math.abs(dy) > Math.abs(dx)) {
+          suppressClick = true;
+          dial.releasePointerCapture(event.pointerId);
+          pointer = null;
+          return;
+        }
+        pointer.dragging = true;
+        stop();
+        pointer.angle = angle;
+        dial.classList.add("is-dragging");
+      }
+      const next = pointer.angle + dx * 1.2;
+      rotateBy(next - angle);
+    });
+    const endPointer = (event: PointerEvent) => {
+      if (!pointer || pointer.id !== event.pointerId) return;
+      const dragged = pointer.dragging;
+      suppressClick = dragged || event.type !== "pointerup";
+      pointer = null;
+      dial.classList.remove("is-dragging");
+      if (dial.hasPointerCapture(event.pointerId)) dial.releasePointerCapture(event.pointerId);
+      if (dragged) snap();
+    };
+    dial.addEventListener("pointerup", endPointer);
+    dial.addEventListener("pointercancel", endPointer);
+    dial.addEventListener("lostpointercapture", endPointer);
+    dial.addEventListener("keydown", (event) => {
+      if (pointer) return;
+      if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+        event.preventDefault();
+        rotateBy(event.key === "ArrowRight" ? 30 : -30);
+        scheduleSnap();
+      }
+    });
+    reducedMotion.addEventListener("change", () => {
+      if (animation) animateTo(targetAngle);
+    });
     card.addEventListener("click", (event) => {
       const target = event.target;
       if (
-        !(target instanceof Element) ||
-        target.closest("a, button, input, label")
-      )
-        return;
+        pointer || (front.inert && back.inert) || !(target instanceof Element) ||
+        target.closest("a, button, input, label, .contact-save")
+      ) return;
       if (window.getSelection()?.toString()) return;
       flip();
     });
