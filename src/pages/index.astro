@@ -12,7 +12,7 @@ const contactLinks = [
   { label: "GITHUB", text: githubLabel, url: profile.github, external: true },
   {
     label: "EMAIL",
-    text: "Get in touch",
+    text: profile.email,
     url: `mailto:${profile.email}`,
     external: false,
   },
@@ -29,12 +29,18 @@ const contactLinks = [
             id="card-front"
             aria-label="Identity · 명함 앞면"
           >
-            <span class="wordmark" aria-hidden="true">
-              W.
-            </span>
+            <header class="front-header">
+              <span class="wordmark" aria-hidden="true">
+                W.
+              </span>
+              <span class="eyebrow eyebrow--front" lang="en">
+                IDENTITY
+              </span>
+            </header>
             <div class="identity">
               <h1 lang="en">{profile.displayName}</h1>
-              <p lang="en">{profile.tagline}</p>
+              <p class="identity-role" lang="en">{profile.role}</p>
+              <p class="identity-tagline" lang="en">{profile.tagline}</p>
             </div>
             <p class="front-footer">{websiteLabel}</p>
           </section>
@@ -98,7 +104,7 @@ const contactLinks = [
           </section>
         </div>
       </article>
-      <div class="card-controls" aria-label="명함 컨트롤">
+      <div class="card-controls" role="group" aria-label="명함 컨트롤">
         <div class="rotation-control" hidden>
           <svg class="rotation-direction" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M8 8H4V4m0 4a8 8 0 1 1-1 7" />
