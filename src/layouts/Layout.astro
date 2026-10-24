@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import { profile } from "../data/profile";
 
 interface Props {
   title: string;
@@ -8,7 +9,7 @@ interface Props {
 
 const { title, description } = Astro.props;
 const canonicalUrl = new URL(Astro.url.pathname, Astro.site);
-const socialImageUrl = new URL("/profile.png", Astro.site);
+const socialImageUrl = new URL(profile.image, Astro.site);
 ---
 
 <!doctype html>
@@ -17,15 +18,16 @@ const socialImageUrl = new URL("/profile.png", Astro.site);
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
-    <meta name="theme-color" content="#111318" />
+    <meta name="theme-color" content="#25272C" />
     <link rel="canonical" href={canonicalUrl} />
-    <link rel="icon" type="image/png" href="/profile.png" />
+    <link rel="icon" type="image/png" href={profile.image} />
 
     <meta property="og:type" content="website" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonicalUrl} />
     <meta property="og:image" content={socialImageUrl} />
+    <meta property="og:image:alt" content={`${profile.name} 프로필 사진`} />
     <meta property="og:locale" content="ko_KR" />
 
     <title>{title}</title>
