@@ -80,6 +80,16 @@ const contactLinks = [
                     <span class="link-text" lang="en">
                       {link.text}
                     </span>
+                    <svg class="link-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      {link.external ? (
+                        <path d="M7 17 17 7M7 7h10v10" />
+                      ) : (
+                        <>
+                          <rect x="3" y="5" width="18" height="14" rx="2" />
+                          <path d="m3 6 9 7 9-7" />
+                        </>
+                      )}
+                    </svg>
                   </a>
                 ))}
               </nav>
@@ -99,33 +109,29 @@ const contactLinks = [
                 lang="en"
               >
                 Save Contact
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M12 3v12m-4-4 4 4 4-4M5 16v5h14v-5" />
+                </svg>
               </a>
             </div>
           </section>
         </div>
       </article>
       <div class="card-controls" role="group" aria-label="명함 컨트롤">
-        <div class="rotation-control" hidden>
-          <svg class="rotation-direction" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M8 8H4V4m0 4a8 8 0 1 1-1 7" />
-          </svg>
-          <button
-            id="rotation-dial"
-            class="rotation-dial"
-            type="button"
-            aria-controls="card-faces"
-            aria-label="명함 회전 · 현재 앞면"
-            aria-describedby="rotation-help"
-          >
-            <span class="dial-rotor" aria-hidden="true"></span>
-          </button>
-          <svg class="rotation-direction" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M16 8h4V4m0 4a8 8 0 1 0 1 7" />
-          </svg>
-        </div>
+        <button
+          id="flip-card"
+          class="quiet-control flip-control"
+          type="button"
+          aria-controls="card-faces"
+          aria-label="명함 뒤집기 · 현재 앞면"
+          aria-describedby="rotation-help"
+          hidden
+        >
+          Flip
+        </button>
         <span id="rotation-help" class="sr-only">
-          좌우로 드래그하거나 휠로 회전합니다. 좌우 방향키로 해당 방향의 다음 면으로 회전하고,
-          Enter 또는 Space를 누르거나 탭하면 다음 면으로 회전합니다.
+          명함을 탭하거나 좌우로 드래그해 뒤집을 수 있습니다. 링크와 QR 영역은 회전하지 않습니다.
+          이 버튼에서 Enter 또는 Space로 다음 면으로, 좌우 방향키로 해당 방향으로 뒤집습니다.
         </span>
         <button
           class="quiet-control"
@@ -160,41 +166,36 @@ const contactLinks = [
   const front = document.querySelector<HTMLElement>("#card-front");
   const back = document.querySelector<HTMLElement>("#card-back");
   const turner = document.querySelector<HTMLElement>("#card-faces");
-  const dial = document.querySelector<HTMLButtonElement>("#rotation-dial");
-  const rotationControl = document.querySelector<HTMLElement>(".rotation-control");
+  const flipButton = document.querySelector<HTMLButtonElement>("#flip-card");
 
-  if (card && front && back && turner && dial && rotationControl) {
+  if (card && front && back && turner && flipButton) {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     let angle = 0;
     let targetAngle = 0;
     let direction = 1;
     let animation = 0;
-    let snapTimer = 0;
-    let wheelMode: "continuous" | "stepped" | null = null;
     let suppressClick = false;
     let pointer: { id: number; x: number; y: number; angle: number; dragging: boolean } | null = null;
 
     const render = () => {
       turner.style.transform = `rotateY(${angle}deg)`;
-      dial.style.setProperty("--dial-angle", `${angle}deg`);
     };
 
     const setFaceAccess = (moving: boolean) => {
       const backVisible = Math.cos((angle * Math.PI) / 180) < 0;
       // Move focus before making either face inert or aria-hidden.
-      if (card.contains(document.activeElement)) dial.focus({ preventScroll: true });
+      if (card.contains(document.activeElement)) flipButton.focus({ preventScroll: true });
       front.inert = moving || backVisible;
       back.inert = moving || !backVisible;
       front.setAttribute("aria-hidden", String(front.inert));
       back.setAttribute("aria-hidden", String(back.inert));
-      dial.setAttribute(
+      flipButton.setAttribute(
         "aria-label",
-        `명함 회전 · ${moving ? "회전 중" : `현재 ${backVisible ? "뒷면" : "앞면"}`}`,
+        `명함 뒤집기 · ${moving ? "회전 중" : `현재 ${backVisible ? "뒷면" : "앞면"}`}`,
       );
     };
 
     const stop = () => {
-      window.clearTimeout(snapTimer);
       cancelAnimationFrame(animation);
       animation = 0;
     };
@@ -225,7 +226,6 @@ const contactLinks = [
     };
 
     const snap = () => {
-      wheelMode = null;
       // Resolve exact half-turn ties in the last input direction, also below zero.
       const turns = angle / 180;
       const nearest = direction > 0 ? Math.floor(turns + 0.5) : Math.ceil(turns - 0.5);
@@ -242,13 +242,7 @@ const contactLinks = [
       render();
     };
 
-    const scheduleSnap = () => {
-      window.clearTimeout(snapTimer);
-      snapTimer = window.setTimeout(snap, 180);
-    };
-
     const flip = (step = direction) => {
-      wheelMode = null;
       direction = step;
       // Repeated taps advance the pending destination instead of resetting it.
       const turns = targetAngle / 180;
@@ -259,78 +253,71 @@ const contactLinks = [
     setFaceAccess(false);
     render();
     card.classList.add("is-interactive");
-    rotationControl.hidden = false;
+    flipButton.hidden = false;
 
-    dial.addEventListener("click", (event) => {
-      if (pointer || (suppressClick && event.detail !== 0)) return;
-      flip();
-    });
-    dial.addEventListener("wheel", (event) => {
-      if (event.ctrlKey || pointer) return;
-      const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
-      if (!delta) return;
-      event.preventDefault();
-      const magnitude = Math.abs(delta);
-      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? window.innerHeight : 1;
-      // WheelEvent has no device identifier. Small/fractional input selects
-      // continuous rotation for this gesture, including its larger later events.
-      const fine = !Number.isInteger(delta) || magnitude < (event.deltaMode === 0 ? 40 : 1);
-      if (fine || wheelMode === null) wheelMode = fine ? "continuous" : "stepped";
-      const normalized = magnitude * unit * 0.6;
-      // A detent must cross the 90-degree snap midpoint; cap large OS deltas.
-      const degrees = wheelMode === "stepped"
-        ? Math.min(150, Math.max(120, normalized))
-        : Math.min(45, normalized);
-      rotateBy(Math.sign(delta) * degrees);
-      scheduleSnap();
-    }, { passive: false });
+    const isAction = (target: EventTarget | null) => target instanceof Element &&
+      !!target.closest("a, button, input, label, .contact-save");
 
-    dial.addEventListener("pointerdown", (event) => {
-      if (!event.isPrimary || event.button !== 0 || pointer) return;
-      suppressClick = false;
-      pointer = { id: event.pointerId, x: event.clientX, y: event.clientY, angle, dragging: false };
-      dial.setPointerCapture(event.pointerId);
+    flipButton.addEventListener("click", () => {
+      if (!pointer) flip();
     });
-    dial.addEventListener("pointermove", (event) => {
-      if (!pointer || pointer.id !== event.pointerId) return;
-      const dx = event.clientX - pointer.x;
-      const dy = event.clientY - pointer.y;
-      if (!pointer.dragging) {
-        if (Math.max(Math.abs(dx), Math.abs(dy)) < 6) return;
-        // Leave vertical touch gestures to the page's native scrolling.
-        if (Math.abs(dy) > Math.abs(dx)) {
-          suppressClick = true;
-          dial.releasePointerCapture(event.pointerId);
-          pointer = null;
-          return;
-        }
-        pointer.dragging = true;
-        wheelMode = null;
-        stop();
-        pointer.angle = angle;
-        dial.classList.add("is-dragging");
-      }
-      const next = pointer.angle + dx * 1.2;
-      rotateBy(next - angle);
-    });
-    const endPointer = (event: PointerEvent) => {
-      if (!pointer || pointer.id !== event.pointerId) return;
-      const dragged = pointer.dragging;
-      suppressClick = dragged || event.type !== "pointerup";
-      pointer = null;
-      dial.classList.remove("is-dragging");
-      if (dial.hasPointerCapture(event.pointerId)) dial.releasePointerCapture(event.pointerId);
-      if (dragged) snap();
-    };
-    dial.addEventListener("pointerup", endPointer);
-    dial.addEventListener("pointercancel", endPointer);
-    dial.addEventListener("lostpointercapture", endPointer);
-    dial.addEventListener("keydown", (event) => {
+    flipButton.addEventListener("keydown", (event) => {
       if (pointer) return;
       if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
         event.preventDefault();
         flip(event.key === "ArrowRight" ? 1 : -1);
       }
+    });
+
+    card.addEventListener("pointerdown", (event) => {
+      if (!event.isPrimary || event.button !== 0 || pointer) return;
+      suppressClick = false;
+      if (isAction(event.target)) return;
+      pointer = { id: event.pointerId, x: event.clientX, y: event.clientY, angle, dragging: false };
+    });
+    card.addEventListener("pointermove", (event) => {
+      if (!pointer || pointer.id !== event.pointerId) return;
+      const dx = event.clientX - pointer.x;
+      const dy = event.clientY - pointer.y;
+      if (!pointer.dragging) {
+        if (Math.max(Math.abs(dx), Math.abs(dy)) < 6) return;
+        // Do not capture until horizontal intent is clear. Native pan-y stays available.
+        if (Math.abs(dy) >= Math.abs(dx)) {
+          suppressClick = true;
+          pointer = null;
+          return;
+        }
+        pointer.dragging = true;
+        stop();
+        pointer.angle = angle;
+        card.setPointerCapture(event.pointerId);
+        card.classList.add("is-dragging");
+      }
+      const next = pointer.angle + dx * 1.2;
+      rotateBy(next - angle);
+    });
+    const finishPointer = (cancelled = false) => {
+      if (!pointer) return;
+      const { id, dragging } = pointer;
+      suppressClick = dragging || cancelled;
+      pointer = null;
+      card.classList.remove("is-dragging");
+      if (card.hasPointerCapture(id)) card.releasePointerCapture(id);
+      if (dragging) snap();
+    };
+    const endPointer = (event: PointerEvent) => {
+      if (pointer?.id === event.pointerId) finishPointer(event.type !== "pointerup");
+    };
+    // Window listeners also handle a click that leaves the card before capture.
+    window.addEventListener("pointerup", endPointer);
+    window.addEventListener("pointercancel", endPointer);
+    card.addEventListener("lostpointercapture", (event) => {
+      // Touch may transfer implicit capture from a face child to the card.
+      if (event.target === card) endPointer(event);
+    });
+    window.addEventListener("blur", () => finishPointer(true));
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) finishPointer(true);
     });
     reducedMotion.addEventListener("change", () => {
       if (animation) animateTo(targetAngle);
@@ -338,10 +325,8 @@ const contactLinks = [
     card.addEventListener("click", (event) => {
       const target = event.target;
       if (
-        pointer || (front.inert && back.inert) || !(target instanceof Element) ||
-        target.closest("a, button, input, label, .contact-save, .contact-qr")
+        pointer || suppressClick || isAction(target) || !(target instanceof Element)
       ) return;
-      if (window.getSelection()?.toString()) return;
       flip();
     });
   }
