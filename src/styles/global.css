@@ -1,6 +1,7 @@
 :root {
   color-scheme: light;
   --front: #25272c;
+  --front-secondary: #d5d7dd;
   --back: #f8fafc;
   --primary: #102552;
   --primary-hover: #1b3973;
@@ -8,6 +9,7 @@
   --muted: #5d6a80;
   --rule: #ced7e5;
   --focus: #6588cb;
+  --control-border: #73829b;
   font-family:
     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
@@ -98,31 +100,43 @@ input {
   font-weight: 750;
   letter-spacing: -0.045em;
 }
-.identity p {
+.identity-role {
   margin-top: 12px;
-  color: #d5d7dd;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+}
+.identity-tagline {
+  margin-top: 8px;
+  color: var(--front-secondary);
   font-size: 14px;
 }
 .front-footer {
   margin-top: auto;
   padding-top: 12px;
   border-top: 1px solid #91a9dd;
-  color: #d5d7dd;
+  color: var(--front-secondary);
   font-size: 12px;
 }
 .card-back {
   background: var(--back);
 }
+.front-header,
 .back-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+.back-header {
   color: var(--primary);
 }
 .eyebrow {
   color: var(--muted);
   font-size: 10px;
   letter-spacing: 0.1em;
+}
+.eyebrow--front {
+  color: var(--front-secondary);
 }
 .connect {
   margin-block: auto;
@@ -271,7 +285,7 @@ input {
   width: 44px;
   height: 44px;
   padding: 6px;
-  border: 1px solid #b5bfce;
+  border: 1px solid var(--control-border);
   border-radius: 50%;
   background: #e4e8ee;
   color: var(--primary);
@@ -281,7 +295,7 @@ input {
   -webkit-user-select: none;
 }
 .rotation-dial:hover {
-  border-color: #8996aa;
+  border-color: #526078;
 }
 .rotation-dial.is-dragging {
   cursor: grabbing;
@@ -290,7 +304,7 @@ input {
   position: relative;
   width: 100%;
   height: 100%;
-  border: 1px solid #8996aa;
+  border: 1px solid var(--control-border);
   border-radius: 50%;
   transform: rotate(var(--dial-angle, 0deg));
   pointer-events: none;
@@ -372,7 +386,7 @@ input {
   width: 100%;
   min-height: 44px;
   padding: 8px;
-  border: 1px solid #8996aa;
+  border: 1px solid var(--control-border);
   border-radius: 4px;
   background: var(--back);
   color: var(--text);
