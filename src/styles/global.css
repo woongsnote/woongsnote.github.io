@@ -43,17 +43,24 @@ input {
   display: none !important;
 }
 .page-shell {
+  --space-top: max(16px, env(safe-area-inset-top));
+  --space-bottom: max(16px, env(safe-area-inset-bottom));
   display: grid;
   min-height: 100vh;
   min-height: 100svh;
   place-items: center;
-  padding: 28px 16px;
+  padding: var(--space-top) max(16px, env(safe-area-inset-right))
+    var(--space-bottom) max(16px, env(safe-area-inset-left));
 }
 .card-stage {
-  width: min(100%, 22.5rem);
+  /* Reserve 12px + 44px for controls. Keep small cards readable and allow scroll. */
+  width: min(100%, 320px, max(260px,
+    calc((100svh - var(--space-top) - var(--space-bottom) - 56px) * 5 / 9)));
 }
 .business-card {
-  perspective: 1200px;
+  container-type: inline-size;
+  /* Orthographic 3D keeps the projected center fixed at every angle. */
+  perspective: none;
 }
 .card-turner {
   display: grid;
@@ -63,7 +70,7 @@ input {
   display: flex;
   flex-direction: column;
   aspect-ratio: 5 / 9;
-  padding: clamp(20px, 6vw, 28px);
+  padding: clamp(20px, 8cqi, 28px);
   border-radius: 12px;
   overflow-wrap: anywhere;
 }
@@ -81,12 +88,12 @@ input {
 .identity {
   position: absolute;
   top: 50%;
-  left: clamp(20px, 6vw, 28px);
+  left: clamp(20px, 8cqi, 28px);
   right: 20px;
   transform: translateY(-50%);
 }
 .identity h1 {
-  font-size: clamp(32px, 9vw, 40px);
+  font-size: clamp(32px, 12cqi, 40px);
   line-height: 1.15;
   font-weight: 750;
   letter-spacing: -0.045em;
@@ -182,23 +189,34 @@ input {
   background: var(--primary-hover);
 }
 /* Both faces remain readable without JavaScript. Enable 3D only after setup. */
-.is-interactive .card-turner {
+.is-interactive {
   position: relative;
-  display: block;
   aspect-ratio: 5 / 9;
+}
+.is-interactive .card-turner {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  transform-origin: 50% 50%;
   transform-style: preserve-3d;
 }
 .is-interactive .card-face {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+  transform-origin: 50% 50%;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
 .is-interactive .card-front {
-  transform: translateZ(0.6px);
+  transform: rotateY(0deg);
 }
 .is-interactive .card-back {
-  transform: rotateY(180deg) translateZ(0.6px);
+  transform: rotateY(180deg);
 }
 /* A thin paper edge remains visible when the faces turn side-on. */
 .is-interactive .card-turner::before,
@@ -365,12 +383,13 @@ input:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 4px;
 }
-@media (max-width: 340px) {
-  .page-shell {
-    padding-inline: 12px;
-  }
+/* Height-limited cards need the same compact spacing as narrow cards. */
+@container (max-width: 290px) {
   .card-face {
     padding: 20px;
+  }
+  .identity {
+    left: 20px;
   }
   .connect {
     padding-block: 10px;
