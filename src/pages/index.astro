@@ -130,7 +130,7 @@ const contactLinks = [
           Flip
         </button>
         <span id="rotation-help" class="sr-only">
-          명함을 탭하거나 좌우로 드래그해 뒤집을 수 있습니다. 링크와 QR 영역은 회전하지 않습니다.
+          명함을 탭하거나 좌우로 드래그해 뒤집을 수 있습니다. 링크는 탭하면 실행되고, QR은 탭해도 회전하지 않습니다.
           이 버튼에서 Enter 또는 Space로 다음 면으로, 좌우 방향키로 해당 방향으로 뒤집습니다.
         </span>
         <button
@@ -175,6 +175,7 @@ const contactLinks = [
     let direction = 1;
     let animation = 0;
     let suppressClick = false;
+    let accessState: "moving" | "front" | "back" | null = null;
     let pointer: { id: number; x: number; y: number; angle: number; dragging: boolean } | null = null;
 
     const render = () => {
@@ -183,12 +184,15 @@ const contactLinks = [
 
     const setFaceAccess = (moving: boolean) => {
       const backVisible = Math.cos((angle * Math.PI) / 180) < 0;
+      const nextState = moving ? "moving" : backVisible ? "back" : "front";
+      if (accessState === nextState) return;
+      accessState = nextState;
       // Move focus before making either face inert or aria-hidden.
-      if (card.contains(document.activeElement)) flipButton.focus({ preventScroll: true });
-      front.inert = moving || backVisible;
-      back.inert = moving || !backVisible;
-      front.setAttribute("aria-hidden", String(front.inert));
-      back.setAttribute("aria-hidden", String(back.inert));
+      for (const [face, hidden] of [[front, moving || backVisible], [back, moving || !backVisible]] as const) {
+        if (hidden && face.contains(document.activeElement)) flipButton.focus({ preventScroll: true });
+        if (face.inert !== hidden) face.inert = hidden;
+        if (face.getAttribute("aria-hidden") !== String(hidden)) face.setAttribute("aria-hidden", String(hidden));
+      }
       flipButton.setAttribute(
         "aria-label",
         `명함 뒤집기 · ${moving ? "회전 중" : `현재 ${backVisible ? "뒷면" : "앞면"}`}`,
@@ -200,7 +204,7 @@ const contactLinks = [
       animation = 0;
     };
 
-    const animateTo = (destination: number) => {
+    const animateTo = (destination: number, duration: number) => {
       stop();
       targetAngle = destination;
       if (reducedMotion.matches || Math.abs(destination - angle) < 0.01) {
@@ -213,7 +217,7 @@ const contactLinks = [
       const origin = angle;
       const started = performance.now();
       const tick = (now: number) => {
-        const progress = Math.min((now - started) / 480, 1);
+        const progress = Math.min((now - started) / duration, 1);
         angle = origin + (destination - origin) * (1 - (1 - progress) ** 3);
         render();
         if (progress < 1) animation = requestAnimationFrame(tick);
@@ -229,7 +233,7 @@ const contactLinks = [
       // Resolve exact half-turn ties in the last input direction, also below zero.
       const turns = angle / 180;
       const nearest = direction > 0 ? Math.floor(turns + 0.5) : Math.ceil(turns - 0.5);
-      animateTo(nearest * 180);
+      animateTo(nearest * 180, 240);
     };
 
     const rotateBy = (delta: number) => {
@@ -238,7 +242,6 @@ const contactLinks = [
       direction = Math.sign(delta);
       angle += delta;
       targetAngle = angle;
-      setFaceAccess(true);
       render();
     };
 
@@ -247,7 +250,7 @@ const contactLinks = [
       // Repeated taps advance the pending destination instead of resetting it.
       const turns = targetAngle / 180;
       const next = direction > 0 ? Math.floor(turns) + 1 : Math.ceil(turns) - 1;
-      animateTo(next * 180);
+      animateTo(next * 180, 300);
     };
 
     setFaceAccess(false);
@@ -272,9 +275,8 @@ const contactLinks = [
     card.addEventListener("pointerdown", (event) => {
       if (!event.isPrimary || event.button !== 0 || pointer) return;
       suppressClick = false;
-      if (isAction(event.target)) return;
       pointer = { id: event.pointerId, x: event.clientX, y: event.clientY, angle, dragging: false };
-    });
+    }, true);
     card.addEventListener("pointermove", (event) => {
       if (!pointer || pointer.id !== event.pointerId) return;
       const dx = event.clientX - pointer.x;
@@ -292,10 +294,13 @@ const contactLinks = [
         pointer.angle = angle;
         card.setPointerCapture(event.pointerId);
         card.classList.add("is-dragging");
+        setFaceAccess(true);
       }
       const next = pointer.angle + dx * 1.2;
       rotateBy(next - angle);
-    });
+    }, true);
+    // Native link/image dragging can cancel the pointer stream on desktop.
+    card.addEventListener("dragstart", (event) => event.preventDefault());
     const finishPointer = (cancelled = false) => {
       if (!pointer) return;
       const { id, dragging } = pointer;
@@ -311,6 +316,10 @@ const contactLinks = [
     // Window listeners also handle a click that leaves the card before capture.
     window.addEventListener("pointerup", endPointer);
     window.addEventListener("pointercancel", endPointer);
+    // A second finger belongs to the browser's pinch gesture, even outside the card.
+    window.addEventListener("pointerdown", (event) => {
+      if (pointer && event.pointerType === "touch" && !event.isPrimary) finishPointer(true);
+    }, true);
     card.addEventListener("lostpointercapture", (event) => {
       // Touch may transfer implicit capture from a face child to the card.
       if (event.target === card) endPointer(event);
@@ -320,15 +329,20 @@ const contactLinks = [
       if (document.hidden) finishPointer(true);
     });
     reducedMotion.addEventListener("change", () => {
-      if (animation) animateTo(targetAngle);
+      if (animation && reducedMotion.matches) animateTo(targetAngle, 0);
     });
     card.addEventListener("click", (event) => {
+      // Cancel the default action before a descendant link can navigate/download.
+      // Keep keyboard and assistive-technology activation (detail=0) available.
+      if (event.detail !== 0 && (pointer || suppressClick)) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        return;
+      }
       const target = event.target;
-      if (
-        pointer || suppressClick || isAction(target) || !(target instanceof Element)
-      ) return;
+      if (isAction(target) || !(target instanceof Element)) return;
       flip();
-    });
+    }, true);
   }
 
   const shareButton = document.querySelector<HTMLButtonElement>("#share-card");

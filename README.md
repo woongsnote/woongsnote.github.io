@@ -26,6 +26,14 @@ npm run check
 npm run build
 ```
 
+브라우저 회귀 테스트는 `tests/gestures.cjs`에 있습니다. 별도로 설치된 Playwright와 Chromium을 사용하며, 프로젝트 의존성을 추가하지 않습니다.
+
+```sh
+NODE_PATH=/path/to/external/node_modules node tests/gestures.cjs
+```
+
+필요하면 `CHROMIUM_EXECUTABLE`로 브라우저 경로를 지정합니다. `TEST_OUTPUT`은 결과 JSON과 화면 캡처를 저장할 디렉터리이며, 기본값은 임시 디렉터리입니다. 터치는 Chromium에서 에뮬레이션하므로 iOS Safari 실기기 검증을 대신하지 않습니다.
+
 ## Deployment
 
 `main`에 push하면 GitHub Actions를 통해 GitHub Pages에 배포합니다. `dev` push는 운영 배포를 실행하지 않습니다.
@@ -35,21 +43,20 @@ npm run build
 - 5:9 세로형 명함, 앞면 `#25272C`, 뒷면 `#F8FAFC`, 버튼 `#102552`
 - 앞면: W. / woong. / Build. Learn. Record. / 블로그 주소
 - 뒷면: BLOG → GITHUB → EMAIL / 연락처 QR / Save Contact
-- 카드의 빈 영역을 클릭·터치하거나 하단 회전 다이얼을 클릭하면 다음 면으로 전환합니다.
-- 다이얼에서 마우스 휠, 좌우 드래그, 모바일 터치 드래그로 회전합니다. 다이얼 밖 스크롤과 세로 터치 스크롤은 유지합니다.
-- 휠은 `deltaMode`를 정규화하고 큰 단발 입력은 90°를 넘겨 한 칸으로 면을 전환합니다. 작은·소수 입력은 연속 회전으로 누적하며, 이벤트별 회전량을 제한합니다. 입력값 기반 구분이므로 장치 설정에 따라 차이가 있습니다.
-- 드래그 종료 또는 마지막 휠 입력 180ms 후 가까운 180° 단위로 스냅하며, 360° 이상 회전도 누적합니다.
-- 키보드는 다이얼에 Tab으로 이동한 뒤 ← / →로 각 방향의 다음 면까지 180° 회전합니다. Enter / Space는 클릭과 같으며, 반복 입력은 대기 중인 목표 각도에 누적합니다.
-- 링크, 연락처 QR과 Save Contact는 카드를 회전시키지 않습니다.
-- 숨겨진 면은 `inert` 및 `aria-hidden`으로 포커스와 접근성 트리에서 제외합니다.
-- 직접 조작은 각도를 즉시 반영하고, 면 전환·스냅은 `requestAnimationFrame` 기반 480ms cubic ease-out을 사용합니다. Reduced Motion에서는 전환·스냅 애니메이션을 생략하며 직접 조작은 유지합니다.
+- 카드의 일반 영역을 클릭·탭하면 다음 면으로 전환합니다.
+- 링크·QR·Save Contact를 포함한 카드 전체에서 수평 드래그로 회전합니다. 6px 이상 움직이고 수평 이동량이 수직 이동량보다 클 때 회전을 시작하며, 감도는 1.2°/px입니다. 세로 스크롤·핀치 줌·휠 스크롤은 브라우저 기본 동작을 유지합니다.
+- 드래그 종료 시 가까운 180° 단위로 스냅하며, 360° 이상 회전도 누적합니다. 드래그 후 발생한 클릭은 링크 이동·다운로드·추가 회전으로 이어지지 않습니다.
+- 키보드는 Tab으로 Flip 버튼에 이동한 뒤 ← / →로 각 방향의 다음 면까지 180° 회전합니다. Enter / Space는 클릭과 같으며, 반복 입력은 대기 중인 목표 각도에 누적합니다. Flip 버튼은 포커스 시 표시됩니다.
+- 링크·Save Contact는 짧게 탭하면 기존 기능을 실행하고, QR 및 연락처 저장 영역의 여백은 탭해도 회전하지 않습니다.
+- 이동 중 양면, 정착 후 숨겨진 면은 `inert` 및 `aria-hidden`으로 포커스와 접근성 트리에서 제외합니다. 속성은 상태가 바뀔 때만 갱신합니다.
+- 직접 조작은 각도를 즉시 반영하고, 면 전환은 300ms, 드래그 종료 스냅은 240ms의 `requestAnimationFrame` 기반 cubic ease-out을 사용합니다. Reduced Motion에서는 전환·스냅 애니메이션을 생략하며 직접 조작은 유지합니다.
 - 작은 화면은 비율을 유지하고 세로 스크롤을 허용합니다.
 - JavaScript를 끄면 앞뒷면을 세로로 표시해 링크와 연락처 저장을 유지합니다.
 
 ## Profile / Contact
 
 - `src/data/profile.ts`: 이름, 표시 이름, 태그라인, 이메일, 링크 정보의 단일 기준
-- `src/pages/index.astro`: 명함 양면, 프로필에서 파생한 링크, 회전 다이얼 및 기존 공유 처리
+- `src/pages/index.astro`: 명함 양면, 프로필에서 파생한 링크, 직접 회전 및 기존 공유 처리
 - `src/pages/contact.vcf.ts`: 기존 vCard 3.0 생성 코드 (UTF-8, CRLF)
 - `public/contact-qr.svg`: 웹 명함용. `profile.cardUrl` 기준 `/contact.vcf`를 인코딩
 - `public/card-qr.svg`: 기존 명함 주소 QR. 추후 실물 명함은 웹 명함 주소를 사용
